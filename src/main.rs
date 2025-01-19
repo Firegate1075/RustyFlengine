@@ -5,6 +5,7 @@ use crate::datamodel::enums::file::File;
 use crate::datamodel::field::Field;
 
 mod datamodel;
+mod move_provider;
 
 fn main() {
     println!("Hello, world!");
