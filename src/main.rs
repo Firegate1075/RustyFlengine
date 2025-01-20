@@ -6,6 +6,7 @@ use crate::datamodel::field::Field;
 
 mod datamodel;
 mod move_provider;
+mod converter;
 
 fn main() {
     println!("Hello, world!");

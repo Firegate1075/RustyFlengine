@@ -24,4 +24,32 @@ impl File {
             File::H => 7,
         }
     }
+
+    pub fn from_index(i: usize) -> Self {
+        match i {
+            0 => File::A,
+            1 => File::B,
+            2 => File::C,
+            3 => File::D,
+            4 => File::E,
+            5 => File::F,
+            6 => File::G,
+            7 => File::H,
+            _ => panic!("Invalid File Number {}", i),
+        }
+    }
+
+    pub fn from_string(s: &str) -> Self {
+        match s {
+            "A" => File::A,
+            "B" => File::B,
+            "C" => File::C,
+            "D" => File::D,
+            "E" => File::E,
+            "F" => File::F,
+            "G" => File::G,
+            "H" => File::H,
+            _ => panic!("Invalid File {}", s),
+        }
+    }
 }

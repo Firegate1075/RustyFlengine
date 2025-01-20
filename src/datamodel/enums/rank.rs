@@ -25,4 +25,18 @@ impl Rank {
             Rank::EIGHT => 7,
         }
     }
+
+    pub fn from_index(i: usize) -> Rank {
+        match i {
+            0 => Rank::ONE,
+            1 => Rank::TWO,
+            2 => Rank::THREE,
+            3 => Rank::FOUR,
+            4 => Rank::FIVE,
+            5 => Rank::SIX,
+            6 => Rank::SEVEN,
+            7 => Rank::EIGHT,
+            _ => panic!("Invalid rank number {}", i),
+        }
+    }
 }
