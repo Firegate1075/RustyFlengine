@@ -42,7 +42,53 @@ fn get_legal_moves_knight(board: &Board, field: &Field) -> Vec<ChessMove> {
 }
 
 fn get_legal_moves_rook(board: &Board, field: &Field) -> Vec<ChessMove> {
-    todo!()
+    let mut moves: Vec<ChessMove> = Vec::new();
+    let color: Color = board.get_piece(field).unwrap().color();
+    let field_rank = field.rank().to_index() as isize;
+    let field_file = field.file().to_index() as isize;
+    let directions = [
+        [0, 1],
+        [0, -1],
+        [1, 0],
+        [-1, 0],
+    ];
+
+    for direction in directions.iter() {
+        let mut rank = field_rank;
+        let mut file = field_file;
+        while rank + direction[0] >= 0 && rank + direction[0] < 8
+                && file + direction[1] >= 0 && file + direction[1] < 8 {
+
+            let next_field = Field::new(
+                File::from_index((file + direction[1]) as usize),
+                Rank::from_index((rank + direction[0]) as usize),
+            );
+
+            if board.get_piece(&next_field).is_none() {
+                // next field in direction is unoccupied
+                rank += direction[0];
+                file += direction[1];
+                moves.push(ChessMove::new(
+                    field.clone(),
+                    next_field,
+                    None,
+                ));
+            } else if board.get_piece(&next_field).is_some_and(|piece| piece.color() != color) {
+                // next field is occupied by opponent
+                moves.push(ChessMove::new(
+                    field.clone(),
+                    next_field,
+                    None,
+                ));
+                break;
+            } else {
+                // next field is occupied by own piece
+                break;
+            }
+        }
+    }
+
+    moves
 }
 
 /// Returns all possible moves of a pawn at given position.
