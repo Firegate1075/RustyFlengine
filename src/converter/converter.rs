@@ -157,7 +157,7 @@ impl Converter {
 
         // get pieces
         for rank in (0..8).rev() {
-            for file in (0..8) {
+            for file in 0..8 {
                 let current_piece: &Option<Piece> = board.get_piece(
                     &Field::new(
                         File::from_index(file as usize),
