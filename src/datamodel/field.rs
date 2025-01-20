@@ -2,7 +2,7 @@ use crate::datamodel::enums::rank::Rank;
 use crate::datamodel::enums::file::File;
 
 /// This struct represents a field on the chess board.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Field {
     /// represents the line on the chess board (One, Two, Three, ... Eight)
     rank: Rank,

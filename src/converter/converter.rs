@@ -148,4 +148,120 @@ impl Converter {
 
         board
     }
+
+    pub fn convert_board_to_string(board: &Board) -> String {
+        let mut fen: String = "".to_string();
+        let mut empty_field_counter: i32 = 0;
+        let mut is_castling_possible: bool = false;
+
+        // get pieces
+        for rank in (0..8).rev() {
+            for file in (0..8) {
+                let current_piece: &Option<Piece> = board.get_piece(
+                    &Field::new(
+                        File::from_index(file as usize),
+                        Rank::from_index(rank as usize))
+                );
+
+                // check for piece
+                if current_piece.is_some() {
+                    // field has piece
+                    let mut current_piece_fen_representation: String = match current_piece
+                        .unwrap()
+                        .piece_type() {
+                            PieceType::ROOK => "r.".to_string(),
+                            PieceType::KNIGHT => "n.".to_string(),
+                            PieceType::BISHOP => "b".to_string(),
+                            PieceType::QUEEN => "q".to_string(),
+                            PieceType::KING => "k".to_string(),
+                            PieceType::PAWN => "p".to_string(),
+                    };
+
+                    // if piece color is white, change piece fen string to uppercase
+                    if current_piece.unwrap().color() == Color::WHITE {
+                        current_piece_fen_representation = current_piece_fen_representation
+                            .to_ascii_uppercase();
+                    }
+
+                    // add empty fields to fen string
+                    if empty_field_counter > 0 {
+                        fen += empty_field_counter.to_string().as_str();
+                        empty_field_counter = 0;
+                    }
+
+                    // add piece to fen string
+                    fen += current_piece_fen_representation.as_str();
+                } else {
+                    // field is empty
+                    empty_field_counter += 1;
+                }
+
+            }
+
+            // after rank is done
+            // add empty fields to fen string
+            if empty_field_counter > 0 {
+                fen += empty_field_counter.to_string().as_str();
+                empty_field_counter = 0;
+            }
+
+            // check whether it is not the last line and only then add a slash
+            if rank != 0 {
+                fen += "/";
+            }
+        }
+        // pieces done
+
+        // get next move color
+        if board.next_color() == Color::WHITE {
+            fen += " w";
+        } else {
+            fen += " b";
+        }
+
+        // get castling information
+        fen += " ";
+
+        if board.white_can_castle_long() {
+            fen += "Q";
+            is_castling_possible = true;
+        }
+        if board.white_can_castle_short() {
+            fen += "K";
+            is_castling_possible = true;
+        }
+        if board.black_can_castle_long() {
+            fen += "q";
+            is_castling_possible = true;
+        }
+        if board.black_can_castle_short() {
+            fen += "k";
+            is_castling_possible = true;
+        }
+
+        // check whether no castling is possible
+        if !is_castling_possible {
+            fen += "-";
+        }
+
+        // get en passant information
+        if board.en_passant_field().is_some() {
+            fen += " ";
+            fen += board.en_passant_field().unwrap().file().to_str();
+            fen += board.en_passant_field().unwrap().rank().to_index().to_string().as_str();
+        } else {
+            fen += " -";
+        }
+
+        // get half moves information
+        // not implemented yet, hardcoded dummy value
+        fen += " 0";
+
+        // get number of move
+        // not implemented yet, hardcoded dummy value
+        fen += " ";
+        fen += board.move_counter().to_string().as_str();
+
+        fen
+    }
 }

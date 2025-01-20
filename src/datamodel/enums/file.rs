@@ -52,4 +52,17 @@ impl File {
             _ => panic!("Invalid File {}", s),
         }
     }
+
+    pub fn to_str(&self) -> &str {
+        match self {
+            File::A => "A",
+            File::B => "B",
+            File::C => "C",
+            File::D => "D",
+            File::E => "E",
+            File::F => "F",
+            File::G => "G",
+            File::H => "H",
+        }
+    }
 }
