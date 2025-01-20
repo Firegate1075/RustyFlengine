@@ -1,6 +1,7 @@
 use crate::datamodel::enums::piece_type::PieceType;
 use crate::datamodel::field::Field;
 
+#[derive(Debug, Clone, Copy)]
 pub struct ChessMove {
     from_field: Field,
     to_field: Field,

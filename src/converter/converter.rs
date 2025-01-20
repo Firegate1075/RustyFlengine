@@ -1,4 +1,5 @@
 use crate::datamodel::board::Board;
+use crate::datamodel::chess_move::ChessMove;
 use crate::datamodel::enums::color::Color;
 use crate::datamodel::enums::file::File;
 use crate::datamodel::enums::piece_type::PieceType;
@@ -263,5 +264,97 @@ impl Converter {
         fen += board.move_counter().to_string().as_str();
 
         fen
+    }
+
+    /// Converts the given string to a move object
+    pub fn convert_string_to_move(input: &String) -> ChessMove {
+        let input: String = input.clone().to_ascii_lowercase();
+
+        let chess_move: ChessMove;
+
+        if input.len() == 4 {
+            chess_move = ChessMove::new(
+                Field::new(
+                    File::from_string(input.chars().nth(0).unwrap().to_string().as_str()),
+                    Rank::from_index(input.chars().nth(1).unwrap().to_digit(10).unwrap() as usize))
+                , Field::new(
+                    File::from_string(input.chars().nth(2).unwrap().to_string().as_str()),
+                    Rank::from_index(input.chars().nth(3).unwrap().to_digit(10).unwrap() as usize)
+                ),
+                None
+            );
+        } else {
+            // promotion has length 5
+            let promotion_type: Option<PieceType> = match input.chars().nth(4).unwrap() {
+                'q' => Some(PieceType::QUEEN),
+                'b' => Some(PieceType::BISHOP),
+                'n' => Some(PieceType::KNIGHT),
+                'r' => Some(PieceType::ROOK),
+                _   => None,
+            };
+
+            chess_move = ChessMove::new(
+                Field::new(
+                    File::from_string(input.chars().nth(0).unwrap().to_string().as_str()),
+                    Rank::from_index(input.chars().nth(1).unwrap().to_digit(10).unwrap() as usize))
+                , Field::new(
+                    File::from_string(input.chars().nth(2).unwrap().to_string().as_str()),
+                    Rank::from_index(input.chars().nth(3).unwrap().to_digit(10).unwrap() as usize)
+                ),
+                Some(promotion_type.expect("invalid promotion type"))
+            );
+        }
+
+        chess_move
+    }
+
+    /// Converts a move object to a string
+    pub fn convert_move_to_string(input: &ChessMove) -> String {
+        let mut chess_move: String = "".to_string();
+        let from_field = input.from_field();
+        let to_field = input.to_field();
+
+        chess_move += from_field.file().to_str();
+        chess_move += from_field.rank().to_index().to_string().as_str();
+        chess_move += to_field.file().to_str();
+        chess_move += to_field.rank().to_index().to_string().as_str();
+
+        if input.promote_to().is_some() {
+            chess_move += match input.promote_to().unwrap() {
+                PieceType::ROOK => "r",
+                PieceType::KNIGHT => "n",
+                PieceType::BISHOP => "b",
+                PieceType::QUEEN => "q",
+                _ => "",
+            };
+        }
+
+        chess_move
+    }
+
+    pub fn sanitize_move(board: &Board, chess_move: &ChessMove) -> ChessMove {
+        let mut sanitized_move: ChessMove = chess_move.clone();
+
+        // if king is moved along the first or eight rank
+        if board.get_piece(chess_move.from_field())
+            .is_some_and(|piece| piece.piece_type() == PieceType::KING)
+            && chess_move.from_field().file() == File::E
+            && (
+                chess_move.from_field().rank() == Rank::ONE
+                && chess_move.from_field().rank() == Rank::ONE
+                || chess_move.to_field().rank() == Rank::EIGHT
+                && chess_move.to_field().rank() == Rank::EIGHT
+            )
+        {
+            if chess_move.to_field().file() == File::H {
+                // represent short castles as moving from e to g file
+                sanitized_move.set_to_field(Field::new(File::G, chess_move.from_field().rank()));
+            } else if chess_move.to_field().file() == File::A {
+                // represent long castles as moving from e to c file
+                sanitized_move.set_to_field(Field::new(File::C, chess_move.from_field().rank()));
+            }
+        }
+
+        sanitized_move
     }
 }
