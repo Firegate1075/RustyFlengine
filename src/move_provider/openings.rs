@@ -2,7 +2,7 @@ use crate::converter::converter::Converter;
 use crate::datamodel::board::Board;
 use crate::datamodel::chess_move::ChessMove;
 use crate::datamodel::options::Options;
-use crate::move_provider::move_provider::MoveProvider;
+use crate::move_provider::MoveProvider;
 
 use reqwest::blocking::get;
 use log::{ info, warn};

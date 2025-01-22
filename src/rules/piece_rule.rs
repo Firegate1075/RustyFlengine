@@ -7,6 +7,9 @@ use crate::datamodel::enums::rank::Rank;
 use crate::datamodel::field::Field;
 
 use itertools::Itertools;
+use log::error;
+use strum::IntoEnumIterator;
+use crate::rules::RulesProvider;
 
 /// Implementation of the individual rules for each chess piece.
 /// Also contains the methods isFieldCovered and isLegalMove.
@@ -14,7 +17,8 @@ struct PieceRule;
 
 impl PieceRule {
     /// Returns all possible moves of a piece on the given field.
-    pub fn get_legal_moves(board: &Board, field: &Field) -> Vec<ChessMove> {
+    /// May include illegal moves (e.g. due to pins, check, etc.)
+    pub fn get_moves_of_piece(board: &Board, field: &Field) -> Vec<ChessMove> {
         match board.get_piece(field).map(|piece| piece.piece_type()) {
             Some(PieceType::PAWN) => get_legal_moves_pawn(board, field),
             Some(PieceType::ROOK) => get_legal_moves_rook(board, field),
@@ -27,7 +31,52 @@ impl PieceRule {
     }
 }
 
+impl RulesProvider for PieceRule {
+    fn get_legal_moves(board: &Board, color: &Color) -> Vec<ChessMove> {
+        let mut moves: Vec<ChessMove> = Vec::new();
 
+        for rank in Rank::iter() {
+            for file in File::iter() {
+                let field = Field::new(file, rank);
+
+                if board.get_piece(&field).is_some_and(|piece|
+                    piece.color() == *color
+                ) {
+                    moves.append(&mut Self::get_moves_of_piece(board, &field));
+                }
+            }
+        }
+
+        moves.iter().filter(|possible_move| {
+            let mut cloned_board = board.clone();
+            cloned_board.play_move(*possible_move);
+            // own king must not be in check after move
+            !is_checked(&cloned_board, color)
+        }).cloned().collect()
+    }
+}
+
+/// Returns whether the king of the given color is in check
+fn is_checked(board: &Board, color: &Color) -> bool {
+    let opponent_color: Color = match color {
+        Color::BLACK => Color::WHITE,
+        Color::WHITE => Color::BLACK,
+    };
+
+    for rank in Rank::iter() {
+        for file in File::iter() {
+            let field = Field::new(file, rank);
+            if board.get_piece(&field).is_some_and(|piece|
+                piece.piece_type() == PieceType::KING
+            ) {
+                return is_field_covered(board, &field, opponent_color);
+            }
+        }
+    }
+
+    error!("King of color {} could not be found", color);
+    false
+}
 
 const ROOK_DIRECTIONS: [[isize; 2]; 4] = [
     [0, 1],
@@ -71,7 +120,7 @@ const KNIGHT_DIRECTIONS: [[isize; 2]; 8] = [
 /// This function returns all the fields visible in a given direction, so it is only useful for
 /// bishops, rooks and queens. Pieces with a limited vision, like pawns, kings and knights must be
 /// handled separately.
-fn get_visible_fields(board: &Board, field: &Field, directions: Vec<[isize; 2]>) -> Vec<Field> {
+fn get_visible_fields_along_direction(board: &Board, field: &Field, directions: Vec<[isize; 2]>) -> Vec<Field> {
     let mut visible_fields: Vec<Field> = Vec::new();
     let field_rank = field.rank().to_index() as isize;
     let field_file = field.file().to_index() as isize;
@@ -103,12 +152,55 @@ fn get_visible_fields(board: &Board, field: &Field, directions: Vec<[isize; 2]>)
 }
 
 fn get_legal_moves_king(board: &Board, field: &Field) -> Vec<ChessMove> {
-    todo!()
+    let mut moves: Vec<ChessMove> = Vec::new();
+    let field_rank = field.rank().to_index() as isize;
+    let field_file = field.file().to_index() as isize;
+    let color: Color = board.get_piece(field).unwrap().color();
+    let opponent_color: Color = match color {
+        Color::BLACK => Color::WHITE,
+        Color::WHITE => Color::BLACK,
+    };
+
+    // TODO: Handling of kingField. maybe make functions member functions of struct and add field
+    // maybe replace
+
+    // add all possible castling moves
+    moves.append(&mut get_castling_moves(board,field).clone());
+
+
+    for (rank, file) in (-1..=1).cartesian_product(-1..=1) {
+        if (rank, file) == (0, 0) {
+            continue;
+        }
+
+        if field_rank + rank >= 0 && field_rank + rank < 8
+            && field_file + file >= 0 && field_file + file < 8
+        {
+            let adjacent_field = Field::new(
+                File::from_index((field_file + file) as usize),
+                Rank::from_index((field_rank + rank) as usize),
+            );
+
+            if board.get_piece(&adjacent_field).is_none_or(|piece|
+                piece.color() != color)
+                // field must not be covered by opponent
+                && !is_field_covered(board, &adjacent_field, opponent_color)
+            {
+                moves.push(ChessMove::new(
+                    field.clone(),
+                    adjacent_field,
+                    None
+                ));
+            }
+        }
+    }
+
+    moves
 }
 
 fn get_legal_moves_queen(board: &Board, field: &Field) -> Vec<ChessMove> {
     let color: Color = board.get_piece(field).unwrap().color();
-    let visible_fields = get_visible_fields(board, field, QUEEN_DIRECTIONS.to_vec());
+    let visible_fields = get_visible_fields_along_direction(board, field, QUEEN_DIRECTIONS.to_vec());
 
     // you can only move to empty fields or capture opponents pieces
     visible_fields.iter().filter( |possible_field: &&Field|
@@ -124,7 +216,7 @@ fn get_legal_moves_queen(board: &Board, field: &Field) -> Vec<ChessMove> {
 
 fn get_legal_moves_bishop(board: &Board, field: &Field) -> Vec<ChessMove> {
     let color: Color = board.get_piece(field).unwrap().color();
-    let visible_fields = get_visible_fields(board, field, BISHOP_DIRECTIONS.to_vec());
+    let visible_fields = get_visible_fields_along_direction(board, field, BISHOP_DIRECTIONS.to_vec());
 
     // you can only move to empty fields or capture opponents pieces
     visible_fields.iter().filter( |possible_field: &&Field|
@@ -169,7 +261,7 @@ fn get_legal_moves_knight(board: &Board, field: &Field) -> Vec<ChessMove> {
 
 fn get_legal_moves_rook(board: &Board, field: &Field) -> Vec<ChessMove> {
     let color: Color = board.get_piece(field).unwrap().color();
-    let visible_fields = get_visible_fields(board, field, ROOK_DIRECTIONS.to_vec());
+    let visible_fields = get_visible_fields_along_direction(board, field, ROOK_DIRECTIONS.to_vec());
 
     // you can only move to empty fields or capture opponents pieces
     visible_fields.iter().filter( |possible_field: &&Field|
@@ -254,7 +346,7 @@ fn get_legal_moves_pawn(board: &Board, field: &Field) -> Vec<ChessMove> {
         } else if color == Color::BLACK && field.rank() == Rank::FOUR
             && board.en_passant_field().unwrap().rank() == Rank::THREE
             && (field.file().to_index() as isize
-            - board.en_passant_field().unwrap().file().to_index() as isize).abs() == 1 {
+                - board.en_passant_field().unwrap().file().to_index() as isize).abs() == 1 {
             moves.push(ChessMove::new(
                 field.clone(),
                 board.en_passant_field().unwrap(),
@@ -264,6 +356,110 @@ fn get_legal_moves_pawn(board: &Board, field: &Field) -> Vec<ChessMove> {
     }
 
     moves
+}
+
+/// Returns the possible castle moves of a king.
+///
+/// A castle move is only possible if:
+///     - Neither king nor rook have moved
+///     - There are no pieces between king and rook
+///     - The king is not currently in check
+///     - The king does not pass through or ends up at a covered square
+/// see [Castling - Requirements](https://en.wikipedia.org/wiki/Castling#Requirements)
+fn get_castling_moves(board: &Board, field: &Field) -> Vec<ChessMove> {
+    let mut moves: Vec<ChessMove> = Vec::new();
+    let color: Color = board.get_piece(field).unwrap().color();
+    let opponent_color: Color = match color {
+        Color::BLACK => Color::WHITE,
+        Color::WHITE => Color::BLACK,
+    };
+    let has_kingside_castling_rights = match color {
+        Color::BLACK => board.black_can_castle_short(),
+        Color::WHITE => board.white_can_castle_short(),
+    };
+    let has_queenside_castling_rights = match color {
+        Color::BLACK => board.black_can_castle_long(),
+        Color::WHITE => board.white_can_castle_long(),
+    };
+
+    // NOTE: many of the checks of the original Flengine are redundant, because they
+    // are contained within castling rights, e.g. that rook and king are at the correct positions
+
+    // king is not in check
+    if !is_field_covered(board, field, opponent_color) {
+
+        let field_b: Field = Field::new(File::B, field.rank());
+        let field_c: Field = Field::new(File::C, field.rank());
+        let field_d: Field = Field::new(File::D, field.rank());
+
+        let field_f: Field = Field::new(File::F, field.rank());
+        let field_g: Field = Field::new(File::G, field.rank());
+
+        // queen side castling
+        if has_queenside_castling_rights
+            // there are no pieces between king and rook
+            && board.get_piece(&field_b).is_none()
+            && board.get_piece(&field_c).is_none()
+            && board.get_piece(&field_d).is_none()
+            // the king does not move through or into check
+            && !is_field_covered(board, &field_c, opponent_color)
+            && !is_field_covered(board, &field_d, opponent_color)
+        {
+            moves.push(ChessMove::new(
+                field.clone(),
+                field_c.clone(),
+                None,
+            ))
+        }
+
+        if has_kingside_castling_rights
+            // there are no pieces between king and rook
+            && board.get_piece(&field_f).is_none()
+            && board.get_piece(&field_g).is_none()
+            // the king does not move through or into check
+            && !is_field_covered(board, &field_f, opponent_color)
+            && !is_field_covered(board, &field_g, opponent_color)
+        {
+            moves.push(ChessMove::new(
+                field.clone(),
+                field_g.clone(),
+                None,
+            ))
+        }
+    }
+
+    moves
+}
+
+
+
+/// Returns if a king of given color is in a one-field-radius of the given field.
+fn is_king_in_range(board: &Board, field: &Field, color: Color) -> bool {
+    let field_rank = field.rank().to_index() as isize;
+    let field_file = field.file().to_index() as isize;
+
+    for (rank, file) in (-1..=1).cartesian_product(-1..=1) {
+        if (rank, file) == (0, 0) {
+            continue;
+        }
+
+        if field_rank + rank >= 0 && field_rank + rank < 8
+            && field_file + file >= 0 && field_file + file < 8
+        {
+            let adjacent_field = Field::new(
+                File::from_index((field_file + file) as usize),
+                Rank::from_index((field_rank + rank) as usize),
+            );
+
+            if board.get_piece(&adjacent_field).is_some_and(|piece|
+                piece.color() == color && piece.piece_type() == PieceType::KING)
+            {
+                return true;
+            }
+        }
+    }
+
+    false
 }
 
 /// Returns if the given field is covered by a piece of the given color.
@@ -324,7 +520,7 @@ fn is_field_covered(board: &Board, field: &Field, color: Color) -> bool {
     }
 
     // field is covered by rook or queen
-    if get_visible_fields(board, field, ROOK_DIRECTIONS.to_vec()).iter()
+    if get_visible_fields_along_direction(board, field, ROOK_DIRECTIONS.to_vec()).iter()
         .filter_map(|f|
             *board.get_piece(f)
         ).any(|p|
@@ -336,7 +532,7 @@ fn is_field_covered(board: &Board, field: &Field, color: Color) -> bool {
     }
 
     // field is covered by bishop or queen
-    if get_visible_fields(board, field, BISHOP_DIRECTIONS.to_vec()).iter()
+    if get_visible_fields_along_direction(board, field, BISHOP_DIRECTIONS.to_vec()).iter()
         .filter_map(|f|
             *board.get_piece(f)
         ).any(|p|

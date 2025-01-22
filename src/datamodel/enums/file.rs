@@ -1,4 +1,6 @@
-#[derive(Debug, Copy, Clone, PartialEq)]
+use strum_macros::EnumIter;
+
+#[derive(Debug, Copy, Clone, PartialEq, EnumIter)]
 #[repr(usize)]
 pub enum File {
     A = 0,

@@ -6,6 +6,7 @@ use crate::datamodel::enums::file::File;
 use crate::datamodel::piece::Piece;
 use super::field::Field;
 
+#[derive(Clone)]
 pub struct Board {
     /// Represents the en passant field.
     /// If not existing the value is None.

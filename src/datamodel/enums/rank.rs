@@ -1,4 +1,6 @@
-#[derive(Debug, Copy, PartialEq)]
+use strum_macros::EnumIter;
+
+#[derive(Debug, Copy, PartialEq, EnumIter)]
 #[repr(usize)]
 #[derive(Clone)]
 pub enum Rank {
