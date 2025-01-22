@@ -13,7 +13,7 @@ use crate::rules::RulesProvider;
 
 /// Implementation of the individual rules for each chess piece.
 /// Also contains the methods isFieldCovered and isLegalMove.
-struct PieceRule;
+pub struct PieceRule;
 
 impl PieceRule {
     /// Returns all possible moves of a piece on the given field.
@@ -28,6 +28,36 @@ impl PieceRule {
             Some(PieceType::KING) => get_legal_moves_king(board, field),
             None => Vec::new(),
         }
+    }
+
+    /// Returns whether the king of the given color is in check
+    pub fn is_checked(board: &Board, color: &Color) -> bool {
+        let opponent_color: Color = match color {
+            Color::BLACK => Color::WHITE,
+            Color::WHITE => Color::BLACK,
+        };
+
+        for rank in Rank::iter() {
+            for file in File::iter() {
+                let field = Field::new(file, rank);
+                if board.get_piece(&field).is_some_and(|piece|
+                    piece.piece_type() == PieceType::KING
+                ) {
+                    return is_field_covered(board, &field, opponent_color);
+                }
+            }
+        }
+
+        error!("King of color {} could not be found", color);
+        false
+    }
+
+    /// Returns whether the king of the given color is checkmated
+    pub fn is_checkmated(board: &Board, color: &Color) -> bool {
+        // its checkmate, when the player is in check and has no legal moves
+        Self::is_checked(board, color)
+            && Self::get_legal_moves(board, color).is_empty()
+            && board.next_color() == *color
     }
 }
 
@@ -51,32 +81,12 @@ impl RulesProvider for PieceRule {
             let mut cloned_board = board.clone();
             cloned_board.play_move(*possible_move);
             // own king must not be in check after move
-            !is_checked(&cloned_board, color)
+            !Self::is_checked(&cloned_board, color)
         }).cloned().collect()
     }
 }
 
-/// Returns whether the king of the given color is in check
-fn is_checked(board: &Board, color: &Color) -> bool {
-    let opponent_color: Color = match color {
-        Color::BLACK => Color::WHITE,
-        Color::WHITE => Color::BLACK,
-    };
 
-    for rank in Rank::iter() {
-        for file in File::iter() {
-            let field = Field::new(file, rank);
-            if board.get_piece(&field).is_some_and(|piece|
-                piece.piece_type() == PieceType::KING
-            ) {
-                return is_field_covered(board, &field, opponent_color);
-            }
-        }
-    }
-
-    error!("King of color {} could not be found", color);
-    false
-}
 
 const ROOK_DIRECTIONS: [[isize; 2]; 4] = [
     [0, 1],

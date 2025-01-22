@@ -11,7 +11,7 @@ pub enum PieceType {
 }
 
 impl PieceType {
-    fn value(&self) -> u8 {
+    pub fn value(&self) -> u8 {
         match self {
             PieceType::PAWN => 1,
             PieceType::ROOK => 5,
