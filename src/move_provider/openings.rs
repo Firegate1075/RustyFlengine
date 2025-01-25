@@ -27,11 +27,11 @@ struct OpeningResponse {
 
 /// An implementation of MoveProvider that uses the Lichess Opening Explorer
 /// to find the best move in an opening situation.
-pub struct Openings{
+#[derive(Debug)]
+pub struct Openings;
 
-}
 impl MoveProvider for Openings{
-    fn get_recommended_moves(board: &Board, options: Options) -> Vec<ChessMove> {
+    fn get_recommended_moves(&self, board: &Board, options: Options) -> Vec<ChessMove> {
         let fen_string: String = Converter::convert_board_to_string(&board);
 
         info!("Requesting opening moves for: [{}]", fen_string);

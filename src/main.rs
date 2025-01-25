@@ -8,6 +8,7 @@ mod datamodel;
 mod move_provider;
 mod converter;
 mod rules;
+mod controller;
 
 fn main() {
     println!("Hello, world!");

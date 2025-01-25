@@ -1,5 +1,6 @@
 use crate::datamodel::enums::difficulty::Difficulty;
 
+#[derive(Clone)]
 pub struct Options {
     difficulty: Difficulty,
     recursion_depth: u32,

@@ -39,10 +39,11 @@ struct EndgameResponse {
 
 /// An implementation of MoveProvider that uses the Lichess Opening Explorer
 /// to find the best move in an opening situation.
+#[derive(Debug)]
 pub struct Endgame;
 
 impl MoveProvider for Endgame{
-    fn get_recommended_moves(board: &Board, options: Options) -> Vec<ChessMove> {
+    fn get_recommended_moves(&self, board: &Board, options: Options) -> Vec<ChessMove> {
         let piece_count = board.piece_count();
         if piece_count > 7 {
             info!("The given board has more than 7 pieces left: [{}]", piece_count);

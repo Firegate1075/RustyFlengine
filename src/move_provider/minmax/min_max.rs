@@ -5,13 +5,15 @@ use crate::datamodel::options::Options;
 use crate::move_provider::MoveProvider;
 use crate::rules::piece_rule::PieceRule;
 use crate::rules::RulesProvider;
+
+#[derive(Debug)]
 pub struct MinMax;
 
 use rayon::prelude::*;
 use crate::move_provider::minmax::recursive_minmax_task::{recursive_minmax_task, MinmaxTaskContext};
 
 impl MoveProvider for MinMax {
-    fn get_recommended_moves(board: &Board, options: Options) -> Vec<ChessMove> {
+    fn get_recommended_moves(&self, board: &Board, options: Options) -> Vec<ChessMove> {
         info!("Starting calculation of minmax.");
         let mut moves = PieceRule::get_legal_moves(board, &board.next_color());
 
