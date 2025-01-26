@@ -1,4 +1,5 @@
 use std::future::{Future, IntoFuture};
+use log::{debug, info};
 use crate::converter::converter::Converter;
 use crate::datamodel::board::Board;
 use crate::datamodel::options::Options;
@@ -44,6 +45,7 @@ impl Organizer {
         let board = self.board.clone();
         let options = self.options.clone();
 
+        info!("Spawning async thread");
         tokio::spawn( async move {
             select! {
                 _ = cancellation_token.cancelled() => Err(CancellationError),
@@ -57,10 +59,19 @@ impl Organizer {
     /// Calculate the next best move to be executed on the actual board.
     /// Returns the best move as uci compatible move string.
     async fn calculate_next_move(move_strings: Vec<String>, mut board: Board, options: Options) -> String {
-        move_strings.iter().for_each(|m|
-            board.play_move(&Converter::convert_string_to_move(m))
+        debug!("calculating");
+
+        move_strings.iter().for_each(|m| {
+            debug!("playing move {}", m);
+            debug!("move is {0:?}", Converter::convert_string_to_move(&m.clone()));
+            board.play_move(&Converter::convert_string_to_move(m));
+            debug!("played move {}", m);
+        }
         );
+        debug!("giving position to controller");
         let best_move: ChessMove = Controller::give_move(&board, &options).unwrap();
+
+        info!("best move is {0:?}", best_move);
         Converter::convert_move_to_string(&best_move)
     }
 

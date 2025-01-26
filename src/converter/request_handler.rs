@@ -2,11 +2,14 @@ use std::future::Future;
 use std::io::{stdin, stdout, Error, Write};
 use futures::{FutureExt, TryFutureExt};
 use log::{info, warn};
+use log4rs::Handle;
 use crate::datamodel::enums::difficulty::Difficulty;
 use crate::datamodel::options::Options;
 
 use strum::IntoEnumIterator;
 use crate::converter::organizer::Organizer;
+use crate::logging;
+use crate::logging::LoggingConfig;
 
 pub struct RequestHandler;
 
@@ -14,7 +17,7 @@ const ENGINE_NAME: &str = "Flengine";
 const ENGINE_AUTHOR: &str = "TeamFlyndre";
 
 impl RequestHandler {
-    pub fn start_up() -> () {
+    pub fn start_up(mut logging_config: LoggingConfig, logging_handle: Handle) -> () {
         let mut options = Options::from_default();
 
         let mut position: String = String::new();
@@ -28,6 +31,7 @@ impl RequestHandler {
         info!("Engine initialized and ready.");
 
         while is_running {
+            input.clear();
             let _ = stdin().read_line(&mut input);
             info!("Received input string: [{}]", input);
 
@@ -126,6 +130,7 @@ impl RequestHandler {
                             info!("Calculation finished. Best move: {}", result.as_ref().ok().unwrap());
                             println!("bestmove {}", result.as_ref().ok().unwrap());
                         });
+                        tokio::spawn(future_move);
                     }
                     "stop" => {
                         // indicate gui asked to send the move
@@ -139,10 +144,14 @@ impl RequestHandler {
                                 "on" => {
                                     // enable uci logging
                                     info!("Set debug mode to [on]");
+                                    logging_config.set_uci_enabled(false);
+                                    logging::update_logger(&logging_config, &logging_handle);
                                 }
                                 "off" => {
                                     // disable uci logging
                                     info!("Set debug mode to [off]");
+                                    logging_config.set_uci_enabled(true);
+                                    logging::update_logger(&logging_config, &logging_handle);
                                 }
                                 _ => {
                                     warn!("The value [{}] is not a valid value for debug.", splitted_input[1]);
@@ -160,7 +169,7 @@ impl RequestHandler {
                     _ => {
                         if splitted_input.len() > 1 {
                             info!("Unrecognized command {}, trying to parse next input.", splitted_input[0]);
-                            splitted_input = splitted_input.iter().skip(1).collect();
+                            splitted_input = splitted_input.iter().skip(1).cloned().collect();
                         }
                         continue;
                     }

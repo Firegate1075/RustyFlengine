@@ -22,7 +22,9 @@ struct EndgameMove {
 
 #[derive(Deserialize)]
 enum EndgameCategory {
+    #[serde(rename = "win")]
     WIN,
+    #[serde(rename = "loss")]
     LOSS,
 }
 
@@ -43,7 +45,7 @@ struct EndgameResponse {
 pub struct Endgame;
 
 impl MoveProvider for Endgame{
-    fn get_recommended_moves(&self, board: &Board, options: Options) -> Vec<ChessMove> {
+    fn get_recommended_moves(&mut self, board: &Board, options: Options) -> Vec<ChessMove> {
         let piece_count = board.piece_count();
         if piece_count > 7 {
             info!("The given board has more than 7 pieces left: [{}]", piece_count);

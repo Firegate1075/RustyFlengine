@@ -1,3 +1,4 @@
+use log::info;
 use crate::datamodel::board::Board;
 use crate::datamodel::chess_move::ChessMove;
 use crate::datamodel::enums::color::Color;
@@ -23,7 +24,7 @@ pub fn recursive_minmax_task(context: MinmaxTaskContext) -> i32 {
     let rating: i32 = rate_move(&new_board, &context.chess_move, context.player_color);
     new_board.play_move(&context.chess_move);
 
-    if context.current_level >= context.MAXLEVEL {
+    if context.current_level >= context.MAXLEVEL || rating.abs() > 60 {
         return rating;
     }
 

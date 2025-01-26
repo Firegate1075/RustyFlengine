@@ -1,3 +1,5 @@
+use log::{debug, info};
+use crate::converter::converter::Converter;
 use crate::datamodel::chess_move::ChessMove;
 use crate::datamodel::enums::color::Color;
 use crate::datamodel::enums::rank::Rank;
@@ -86,17 +88,26 @@ impl Board {
         }
 
         // check if the move to play is an en passant move
-        if piece_from.piece_type() == PieceType::PAWN && (chess_move.from_field().rank() != chess_move.to_field().rank() || chess_move.from_field().file() != chess_move.to_field().file()) {
+        // en passant is determined by a pawn that moves sideways (captures)
+        // and moves to an empty square
+        if piece_from.piece_type() == PieceType::PAWN
+            && (chess_move.from_field().file() != chess_move.to_field().file())
+            && self.get_piece(chess_move.to_field()).is_none()
+        {
             // remove the captured pawn. It is on the same line as the starting field of the move and the same row as the ending field of the move
             self.set_piece(None, &Field::new(chess_move.to_field().file(), chess_move.from_field().rank()))
         }
 
+        debug!("Board is {}", Converter::convert_board_to_string(self));
+
         // set the piece on the to-field
         self.set_piece(*self.get_piece(chess_move.from_field()), chess_move.to_field());
 
+        debug!("Board is {}", Converter::convert_board_to_string(self));
         //delete piece from from-field
         self.set_piece(None, chess_move.from_field());
 
+        debug!("Board is {}", Converter::convert_board_to_string(self));
         // check for castling
         if self.get_piece(chess_move.to_field()).unwrap().piece_type() == PieceType::KING {
             // check for white short castling
@@ -113,13 +124,13 @@ impl Board {
                 self.set_piece(None, &Field::new(File::A, Rank::ONE));
             }
             else if chess_move.from_field().rank() == Rank::EIGHT && chess_move.from_field().file() == File::E
-                && chess_move.from_field().rank() == Rank::EIGHT && chess_move.from_field().file() == File::G {
+                && chess_move.to_field().rank() == Rank::EIGHT && chess_move.to_field().file() == File::G {
                 // move rook
                 self.set_piece(Some(Piece::new(Color::BLACK, PieceType::ROOK)), &Field::new(File::F, Rank::EIGHT));
                 self.set_piece(None, &Field::new(File::H, Rank::EIGHT));
             }
             else if chess_move.from_field().rank() == Rank::EIGHT && chess_move.from_field().file() == File::E
-                && chess_move.from_field().rank() == Rank::EIGHT && chess_move.from_field().file() == File::C {
+                && chess_move.to_field().rank() == Rank::EIGHT && chess_move.to_field().file() == File::C {
                 // move rook
                 self.set_piece(Some(Piece::new(Color::BLACK, PieceType::ROOK)), &Field::new(File::D, Rank::EIGHT));
                 self.set_piece(None, &Field::new(File::A, Rank::EIGHT));

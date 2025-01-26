@@ -10,5 +10,5 @@ pub mod minmax;
 /// Provides functionality to obtain recommended moves for a given chess situation.
 pub trait MoveProvider: Debug {
     /// Provides a vector of recommended ChessMoves for the given position on the Board.
-    fn get_recommended_moves(&self, board: &Board, options: Options) -> Vec<ChessMove>;
+    fn get_recommended_moves(&mut self, board: &Board, options: Options) -> Vec<ChessMove>;
 }

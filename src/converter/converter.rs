@@ -170,8 +170,8 @@ impl Converter {
                     let mut current_piece_fen_representation: String = match current_piece
                         .unwrap()
                         .piece_type() {
-                            PieceType::ROOK => "r.".to_string(),
-                            PieceType::KNIGHT => "n.".to_string(),
+                            PieceType::ROOK => "r".to_string(),
+                            PieceType::KNIGHT => "n".to_string(),
                             PieceType::BISHOP => "b".to_string(),
                             PieceType::QUEEN => "q".to_string(),
                             PieceType::KING => "k".to_string(),
@@ -248,8 +248,8 @@ impl Converter {
         // get en passant information
         if board.en_passant_field().is_some() {
             fen += " ";
-            fen += board.en_passant_field().unwrap().file().to_str();
-            fen += board.en_passant_field().unwrap().rank().to_index().to_string().as_str();
+            fen += board.en_passant_field().unwrap().file().to_str().to_ascii_lowercase().as_str();
+            fen += board.en_passant_field().unwrap().rank().to_str();
         } else {
             fen += " -";
         }
@@ -276,10 +276,10 @@ impl Converter {
             chess_move = ChessMove::new(
                 Field::new(
                     File::from_string(input.chars().nth(0).unwrap().to_string().as_str()),
-                    Rank::from_index(input.chars().nth(1).unwrap().to_digit(10).unwrap() as usize))
+                    Rank::from_string(input.chars().nth(1).unwrap().to_string().as_str()))
                 , Field::new(
                     File::from_string(input.chars().nth(2).unwrap().to_string().as_str()),
-                    Rank::from_index(input.chars().nth(3).unwrap().to_digit(10).unwrap() as usize)
+                    Rank::from_string(input.chars().nth(3).unwrap().to_string().as_str())
                 ),
                 None
             );
@@ -296,10 +296,10 @@ impl Converter {
             chess_move = ChessMove::new(
                 Field::new(
                     File::from_string(input.chars().nth(0).unwrap().to_string().as_str()),
-                    Rank::from_index(input.chars().nth(1).unwrap().to_digit(10).unwrap() as usize))
+                    Rank::from_string(input.chars().nth(1).unwrap().to_string().as_str()))
                 , Field::new(
                     File::from_string(input.chars().nth(2).unwrap().to_string().as_str()),
-                    Rank::from_index(input.chars().nth(3).unwrap().to_digit(10).unwrap() as usize)
+                    Rank::from_string(input.chars().nth(3).unwrap().to_string().as_str())
                 ),
                 Some(promotion_type.expect("invalid promotion type"))
             );
@@ -314,10 +314,10 @@ impl Converter {
         let from_field = input.from_field();
         let to_field = input.to_field();
 
-        chess_move += from_field.file().to_str();
-        chess_move += from_field.rank().to_index().to_string().as_str();
-        chess_move += to_field.file().to_str();
-        chess_move += to_field.rank().to_index().to_string().as_str();
+        chess_move += from_field.file().to_str().to_ascii_lowercase().as_str();
+        chess_move += from_field.rank().to_str();
+        chess_move += to_field.file().to_str().to_ascii_lowercase().as_str();
+        chess_move += to_field.rank().to_str();
 
         if input.promote_to().is_some() {
             chess_move += match input.promote_to().unwrap() {
