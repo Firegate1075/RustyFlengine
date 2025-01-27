@@ -15,7 +15,7 @@ pub struct MinmaxTaskContext {
     pub chess_move: ChessMove,
     pub current_level: i32,
     pub player_color: Color,
-    pub MAXLEVEL: i32,
+    pub max_level: i32,
 }
 
 pub fn recursive_minmax_task(context: MinmaxTaskContext) -> i32 {
@@ -24,7 +24,7 @@ pub fn recursive_minmax_task(context: MinmaxTaskContext) -> i32 {
     let rating: i32 = rate_move(&new_board, &context.chess_move, context.player_color);
     new_board.play_move(&context.chess_move);
 
-    if context.current_level >= context.MAXLEVEL || rating.abs() > 60 {
+    if context.current_level >= context.max_level || rating.abs() > 60 {
         return rating;
     }
 

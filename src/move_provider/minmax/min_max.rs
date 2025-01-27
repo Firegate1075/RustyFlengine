@@ -28,7 +28,7 @@ impl MoveProvider for MinMax {
                         chess_move: *mov,
                         current_level: 1,
                         player_color: board.next_color(),
-                        MAXLEVEL: options.recursion_depth() as i32,
+                        max_level: options.recursion_depth() as i32,
                     }
                 ))
             ).collect();
