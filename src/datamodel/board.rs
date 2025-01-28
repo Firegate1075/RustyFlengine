@@ -1,4 +1,4 @@
-use log::{debug, info};
+use log::{trace};
 use crate::converter::converter::Converter;
 use crate::datamodel::chess_move::ChessMove;
 use crate::datamodel::enums::color::Color;
@@ -98,16 +98,16 @@ impl Board {
             self.set_piece(None, &Field::new(chess_move.to_field().file(), chess_move.from_field().rank()))
         }
 
-        debug!("Board is {}", Converter::convert_board_to_string(self));
+        trace!("Board is {}", Converter::convert_board_to_string(self));
 
         // set the piece on the to-field
         self.set_piece(*self.get_piece(chess_move.from_field()), chess_move.to_field());
 
-        debug!("Board is {}", Converter::convert_board_to_string(self));
+        trace!("Board is {}", Converter::convert_board_to_string(self));
         //delete piece from from-field
         self.set_piece(None, chess_move.from_field());
 
-        debug!("Board is {}", Converter::convert_board_to_string(self));
+        trace!("Board is {}", Converter::convert_board_to_string(self));
         // check for castling
         if self.get_piece(chess_move.to_field()).unwrap().piece_type() == PieceType::KING {
             // check for white short castling

@@ -1,5 +1,5 @@
 use std::future::{Future, IntoFuture};
-use log::{debug, info};
+use log::{debug, info, trace};
 use crate::converter::converter::Converter;
 use crate::datamodel::board::Board;
 use crate::datamodel::options::Options;
@@ -59,13 +59,12 @@ impl Organizer {
     /// Calculate the next best move to be executed on the actual board.
     /// Returns the best move as uci compatible move string.
     async fn calculate_next_move(move_strings: Vec<String>, mut board: Board, options: Options) -> String {
-        debug!("calculating");
 
         move_strings.iter().for_each(|m| {
-            debug!("playing move {}", m);
-            debug!("move is {0:?}", Converter::convert_string_to_move(&m.clone()));
+            trace!("playing move {}", m);
+            trace!("move is {0:?}", Converter::convert_string_to_move(&m.clone()));
             board.play_move(&Converter::convert_string_to_move(m));
-            debug!("played move {}", m);
+            trace!("played move {}", m);
         }
         );
         debug!("giving position to controller");

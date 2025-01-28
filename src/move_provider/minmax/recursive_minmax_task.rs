@@ -1,4 +1,3 @@
-use log::info;
 use crate::datamodel::board::Board;
 use crate::datamodel::chess_move::ChessMove;
 use crate::datamodel::enums::color::Color;

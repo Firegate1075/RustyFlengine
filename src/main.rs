@@ -28,7 +28,7 @@ async fn main() {
         true,
         "%Y%m%d-%H%M%S-%3f".to_string(),
         "./flengine-".to_string(),
-        Info
+        Debug
     );
 
     let handle = logging::setup_logger(&logging_config);

@@ -16,7 +16,7 @@ use crate::move_provider::minmax::recursive_minmax_task::{recursive_minmax_task,
 impl MoveProvider for MinMax {
     fn get_recommended_moves(&mut self, board: &Board, options: Options) -> Vec<ChessMove> {
         info!("Starting calculation of minmax for position {:?}.", Converter::convert_board_to_string(board));
-        let mut moves = PieceRule::get_legal_moves(board, &board.next_color());
+        let moves = PieceRule::get_legal_moves(board, &board.next_color());
 
         info!("Got legal moves: {:?}", &moves);
 

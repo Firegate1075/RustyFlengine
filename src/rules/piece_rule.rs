@@ -7,7 +7,7 @@ use crate::datamodel::enums::rank::Rank;
 use crate::datamodel::field::Field;
 
 use itertools::Itertools;
-use log::{debug, error, info};
+use log::{trace, error};
 use strum::IntoEnumIterator;
 use crate::converter::converter::Converter;
 use crate::rules::RulesProvider;
@@ -33,7 +33,7 @@ impl PieceRule {
 
     /// Returns whether the king of the given color is in check
     pub fn is_checked(board: &Board, color: &Color) -> bool {
-        debug!("Checking if {:?} is in check", color);
+        trace!("Checking if {:?} is in check", color);
 
         let opponent_color: Color = match color {
             Color::BLACK => Color::WHITE,
@@ -67,7 +67,7 @@ impl PieceRule {
 
 impl RulesProvider for PieceRule {
     fn get_legal_moves(board: &Board, color: &Color) -> Vec<ChessMove> {
-        debug!("Calculating legal moves for {}", color);
+        trace!("Calculating legal moves for {}", color);
         let mut moves: Vec<ChessMove> = Vec::new();
 
         for rank in Rank::iter() {
@@ -77,13 +77,13 @@ impl RulesProvider for PieceRule {
                 if board.get_piece(&field).is_some_and(|piece|
                     piece.color() == *color
                 ) {
-                    debug!("piece on {:?} has moves {:?}", field,  Self::get_moves_of_piece(board, &field));
+                    trace!("piece on {:?} has moves {:?}", field,  Self::get_moves_of_piece(board, &field));
                     moves.append(&mut Self::get_moves_of_piece(board, &field));
                 }
             }
         }
 
-        debug!("Found possible moves {:?}", moves);
+        trace!("Found possible moves {:?}", moves);
 
         moves.iter().filter(|possible_move| {
             let mut cloned_board = board.clone();
@@ -91,7 +91,7 @@ impl RulesProvider for PieceRule {
             // own king must not be in check after move
             let would_be_check = Self::is_checked(&cloned_board, color);
             if  would_be_check {
-                debug!("Excluding move {:?} because it would put own king in check", possible_move);
+                trace!("Excluding move {:?} because it would put own king in check", possible_move);
             }
             !would_be_check
         }).cloned().collect()
@@ -486,7 +486,7 @@ fn is_king_in_range(board: &Board, field: &Field, color: Color) -> bool {
 
 /// Returns if the given field is covered by a piece of the given color.
 fn is_field_covered(board: &Board, field: &Field, color: Color) -> bool {
-    debug!("Checking if {:?} is covered by {:?}", field, color);
+    trace!("Checking if {:?} is covered by {:?}", field, color);
     let pawn_direction: isize = match color {
         Color::WHITE => -1,
         Color::BLACK => 1,
@@ -521,7 +521,7 @@ fn is_field_covered(board: &Board, field: &Field, color: Color) -> bool {
             || diagonal_right.is_some_and(|d| board.get_piece(&d).is_some_and(|p|
                 p.color() == color && p.piece_type() == PieceType::PAWN))
         {
-            debug!("Field is covered by a pawn");
+            trace!("Field is covered by a pawn");
             return true;
         }
     }
@@ -538,7 +538,7 @@ fn is_field_covered(board: &Board, field: &Field, color: Color) -> bool {
             if board.get_piece(&next_field).is_some_and(|piece|
                 piece.color() == color && piece.piece_type() == PieceType::KNIGHT)
             {
-                debug!("Field is covered by a knight");
+                trace!("Field is covered by a knight");
                 return true;
             }
         }
@@ -553,7 +553,7 @@ fn is_field_covered(board: &Board, field: &Field, color: Color) -> bool {
                 (p.piece_type() == PieceType::QUEEN || p.piece_type() == PieceType::ROOK)
         )
     {
-        debug!("Field is covered by a rook or a queen");
+        trace!("Field is covered by a rook or a queen");
         return true;
     }
 
@@ -566,7 +566,7 @@ fn is_field_covered(board: &Board, field: &Field, color: Color) -> bool {
             (p.piece_type() == PieceType::QUEEN || p.piece_type() == PieceType::BISHOP)
     )
     {
-        debug!("Field is covered by a bishop or a queen");
+        trace!("Field is covered by a bishop or a queen");
         return true;
     }
 
@@ -587,12 +587,12 @@ fn is_field_covered(board: &Board, field: &Field, color: Color) -> bool {
             if board.get_piece(&adjacent_field).is_some_and(|piece|
                 piece.color() == color && piece.piece_type() == PieceType::KING)
             {
-                debug!("Field is covered by a king");
+                trace!("Field is covered by a king");
                 return true;
             }
         }
     }
 
-    debug!("Field is not covered.");
+    trace!("Field is not covered.");
     false
 }
