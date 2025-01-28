@@ -7,6 +7,9 @@ pub mod openings;
 pub mod endgame;
 
 pub mod minmax;
+
+pub mod negamax;
+
 /// Provides functionality to obtain recommended moves for a given chess situation.
 pub trait MoveProvider: Debug {
     /// Provides a vector of recommended ChessMoves for the given position on the Board.
