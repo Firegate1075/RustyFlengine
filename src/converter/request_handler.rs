@@ -108,12 +108,37 @@ impl RequestHandler {
                         if splitted_input.len() > 1 {
                             position = splitted_input[1].to_string();
 
-                            // get moves
-                            if splitted_input.len() > 3 {
-                                if splitted_input[2] == "moves" {
-                                    moves = splitted_input.iter().skip(3).map(|s| s.to_string()).collect();
+                            match position.as_str() {
+                                "fen" => {
+                                    // the fen string is also split, so compute it from its parts
+                                    // the fen string starts at element 3 and is made of 6 parts
+                                    position = splitted_input.iter().skip(2).take(6)
+                                        .map(|s| s.to_string())
+                                        // concatenate the strings with spaces
+                                        .reduce(|fen, elem| fen + " " + &elem)
+                                        .unwrap();
+                                    
+                                    // get moves
+                                    // position fen <fen1> <fen2> <fen3> <fen4> <fen5> <fen6> moves <move1> <move2> ... 
+                                    if splitted_input.len() > 9 {
+                                        if splitted_input[8] == "moves" {
+                                            // take all the move strings after "moves", which is the 4th element
+                                            moves = splitted_input.iter().skip(9).map(|s| s.to_string()).collect();
+                                        }
+                                    }
                                 }
-                            }
+                                "startpos" => {
+                                    // leave position string as startpos
+                                    // get moves
+                                    if splitted_input.len() > 3 {
+                                        if splitted_input[2] == "moves" {
+                                            moves = splitted_input.iter().skip(3).map(|s| s.to_string()).collect();
+                                        }
+                                    }
+                                }
+                                _ => { panic!("The value [{}] is not a valid position.", position); }
+                            };
+                            
                             // computing is started with the go command
                         }
                     }

@@ -1,3 +1,4 @@
+use log::debug;
 use crate::datamodel::board::Board;
 use crate::datamodel::chess_move::ChessMove;
 use crate::datamodel::enums::color::Color;
@@ -13,6 +14,8 @@ pub struct Converter;
 impl Converter {
     pub fn convert_string_to_board(input: String) -> Board {
         let mut board: Board = Board::new();
+
+        debug!("Received board string [{}]", input);
 
         // startposition
         if input == "startpos" {
@@ -55,7 +58,6 @@ impl Converter {
             board.set_piece(Some(Piece::new(Color::BLACK, PieceType::PAWN)),    &Field::new(File::H, Rank::SEVEN));
 
         } else {
-            // fen string
             let split: Vec<String> = input.split(" ").map(|s| s.to_string()).collect();
             let pos: &String = &split[0];
 
