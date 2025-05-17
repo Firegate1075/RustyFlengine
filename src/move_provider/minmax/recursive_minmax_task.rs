@@ -47,10 +47,7 @@ fn rate_move(board: &Board, chess_move: &ChessMove, player_color: Color) -> i32 
     let mut evaluation: i32 = 0;
     let field: Field = *chess_move.to_field();
 
-    let opponent_color: Color = match player_color {
-        Color::BLACK => Color::WHITE,
-        Color::WHITE => Color::BLACK,
-    };
+    let opponent_color: Color = !player_color;
 
     let piece_to_hit = board.get_piece(&field);
 
